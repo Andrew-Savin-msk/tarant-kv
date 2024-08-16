@@ -1,4 +1,4 @@
-package apiserver
+package config
 
 import (
 	"log"
@@ -10,37 +10,48 @@ import (
 )
 
 type Config struct {
-	BindAddr    string `toml:"bind_addr"`
-	LogLevel    string `toml:"log_level"`
-	DatabaseURL string `toml:"database_url"`
-	SessionKey  string `toml:"session_key"`
+	Srv Server   `toml:"server"`
+	Db  Database `toml:"database"`
 }
 
-func ConfigLoad() *Config {
-	var configPathEnv = "CONFIG_PATH_DOCKER"
-	if runtime.GOOS == "windows" {
-		// Connect
+type Server struct {
+	Port       string `toml:"port"`
+	SessionKey string `toml:"session_key"`
+	LogLevel   string `toml:"log_level"`
+}
+
+type Database struct {
+	User     string `toml:"user"`
+	Password string `toml:"password"`
+	Host     string `toml:"host"`
+	DbName   string `toml:"db_name"`
+}
+
+func Load() *Config {
+	var envParamName = "DOCKER_CONFIG_PATH"
+	switch runtime.GOOS {
+	case "windows":
+		envParamName = "CONFIG_PATH"
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatal("Error loading local.env file whith error:", err)
+			log.Fatalf("Unable to load .env with error: %s", err)
 		}
-		configPathEnv = "CONFIG_PATH"
 	}
 
-	configPath := os.Getenv(configPathEnv)
+	configPath := os.Getenv(envParamName)
 	if configPath == "" {
-		log.Fatal("config path is not set")
+		log.Fatal("Enviromental variable doen't exists!")
 	}
 
 	_, err := os.Stat(configPath)
-	if os.IsNotExist(err) {
-		log.Fatalf("config file does not exists %s", configPath)
+	if err != nil {
+		log.Fatalf("Error with file stats: %s", err)
 	}
 
 	var cfg Config
 	_, err = toml.DecodeFile(configPath, &cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Trouble with loading data from config file: %s", err)
 	}
 	return &cfg
 }
