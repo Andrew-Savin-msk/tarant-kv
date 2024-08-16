@@ -8,4 +8,5 @@
   password = "postgres"
   host = "database"
   db_name = "filmoteka"
+  port = "3301"
   

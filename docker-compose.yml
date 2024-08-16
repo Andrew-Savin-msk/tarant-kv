@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  value_database:
+    image: tarantool/tarantool:latest
+    container_name: value_database
+    ports:
+      - "3301:3301"
+    volumes:
+      - ./migrations/value_init.lua:/opt/tarantool/init.lua
+    environment:
+      TARANTOOL_MEMORY_GB: 1.0
+    command: tarantool /opt/tarantool/init.lua
+    restart: always

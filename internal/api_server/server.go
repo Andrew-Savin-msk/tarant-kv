@@ -1,14 +1,11 @@
 package apiserver
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -27,16 +24,17 @@ var (
 type ctxKey int8
 
 type server struct {
-	router *mux.Router
-	logger *logrus.Logger
-	store  store.Store
+	router      *mux.Router
+	logger      *logrus.Logger
+	value_store store.ValueStore
+	user_store  store.UserStore
 }
 
-func newServer(st store.Store, logger *logrus.Logger) *server {
+func newServer(st store.ValueStore, logger *logrus.Logger) *server {
 	srv := &server{
-		router: mux.NewRouter(),
-		logger: logger,
-		store:  st,
+		router:      mux.NewRouter(),
+		logger:      logger,
+		value_store: st,
 	}
 
 	srv.configureRouter()
@@ -51,68 +49,14 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-	s.router.Use(s.authenticateUser)
+	s.router.PathPrefix("/api")
 
-}
+	// TODO: Now it's off for testing
+	// s.router.Use(s.authenticateUser)
+	s.router.HandleFunc("/login", s.handleLogin()).Methods("POST")
+	s.router.HandleFunc("/write", s.handleWriteKeys()).Methods("PUT")
+	s.router.HandleFunc("/read", s.handleReadKeys()).Methods("GET")
 
-// Sets unical id for every request
-func (s *server) setRequestID(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := uuid.New().String()
-		w.Header().Set("X-Request-Id", id)
-
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyRequestID, id)))
-	})
-}
-
-// logRequest loggin any request and it's responce
-func (s *server) logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := s.logger.WithFields(logrus.Fields{
-			"remout_addr": r.RemoteAddr,
-			"request_id":  r.Context().Value(ctxKeyRequestID),
-		})
-		logger.Infof("started %s %s", r.Method, r.RequestURI)
-
-		start := time.Now()
-		rw := &responseWrighter{w, http.StatusOK}
-
-		next.ServeHTTP(rw, r)
-
-		logger.Infof(
-			"completed in %v %s in %v",
-			rw.code,
-			http.StatusText((rw.code)),
-			time.Now().Sub(start),
-		)
-	})
-}
-
-// authenticateUser autentificates user by token in Authorisation header
-func (s *server) authenticateUser(next http.Handler) http.Handler {
-	// TODO:
-	panic("unimplemented")
-	// return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	session, err := s.sessionStore.Get(r, sessionName)
-	// 	if err != nil {
-	// 		s.error(w, r, http.StatusInternalServerError, err)
-	// 		return
-	// 	}
-
-	// 	id, ok := session.Values["user_id"]
-	// 	if !ok {
-	// 		s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
-	// 		return
-	// 	}
-
-	// 	u, err := s.store.User().Find(id.(int))
-	// 	if err != nil {
-	// 		s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
-	// 		return
-	// 	}
-
-	// 	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
-	// })
 }
 
 // Func for making call of respond func with Error pattern

@@ -13,7 +13,7 @@ func New(db *tarantool.Connection) *Store {
 }
 
 // TODO:
-func (s *Store) SetKeys(keys map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+func (s *Store) SetKeys(keys map[interface{}]interface{}) error {
 	panic("unimplemented")
 }
 

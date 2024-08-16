@@ -6,27 +6,42 @@ import (
 	"strings"
 
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/config"
+	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
+	tarantstore "github.com/Andrew-Savin-msk/tarant-kv/internal/store/tarant_store"
 	"github.com/sirupsen/logrus"
+	"github.com/tarantool/go-tarantool"
 )
 
+// Start init's all connections and starts api's work
 func Start(cfg *config.Config) error {
 	// Get logger
-
 	log := setLog(cfg.Srv.LogLevel)
 
 	// Get value store
+	vSt, err := connValueStore(&cfg.Db)
+	if err != nil {
+		log.Fatalf("unable to connect value store, ended with error: %w", err)
+	}
 
 	// Get user store
 
 	// Get server
-	srv := newServer(nil, log)
+	srv := newServer(vSt, log)
 
+	log.Info("api strted work on port: %s", cfg.Srv.Port)
 	// Start listner
-	http.ListenAndServe(cfg.Srv.Port, srv)
+	err = http.ListenAndServe(cfg.Srv.Port, srv)
+
+	if err != nil {
+		log.Infof("api ended work with error: %w", err)
+	} else {
+		log.Info("api ended work")
+	}
 
 	return nil
 }
 
+// setLog set logger level by setted in config
 func setLog(level string) *logrus.Logger {
 	log := logrus.New()
 	switch strings.ToLower(level) {
@@ -39,4 +54,21 @@ func setLog(level string) *logrus.Logger {
 	}
 	fmt.Printf("logger set in level: %s \n", level)
 	return log
+}
+
+// TODO:
+func connValueStore(cfg *config.Database) (store.ValueStore, error) {
+	opts := *&tarantool.Opts{}
+
+	con, err := tarantool.Connect(cfg.Port, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = con.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return tarantstore.New(con), nil
 }

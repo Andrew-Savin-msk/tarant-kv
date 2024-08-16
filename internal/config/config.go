@@ -25,6 +25,7 @@ type Database struct {
 	Password string `toml:"password"`
 	Host     string `toml:"host"`
 	DbName   string `toml:"db_name"`
+	Port     string `toml:"port"`
 }
 
 func Load() *Config {
@@ -34,24 +35,24 @@ func Load() *Config {
 		envParamName = "CONFIG_PATH"
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatalf("Unable to load .env with error: %s", err)
+			log.Fatalf("unable to load .env with error: %s", err)
 		}
 	}
 
 	configPath := os.Getenv(envParamName)
 	if configPath == "" {
-		log.Fatal("Enviromental variable doen't exists!")
+		log.Fatal("enviromental variable doen't exists!")
 	}
 
 	_, err := os.Stat(configPath)
 	if err != nil {
-		log.Fatalf("Error with file stats: %s", err)
+		log.Fatalf("error with file stats: %s", err)
 	}
 
 	var cfg Config
 	_, err = toml.DecodeFile(configPath, &cfg)
 	if err != nil {
-		log.Fatalf("Trouble with loading data from config file: %s", err)
+		log.Fatalf("unable to load data from config file: %s", err)
 	}
 	return &cfg
 }
