@@ -18,15 +18,19 @@ func Start(cfg *config.Config) error {
 	log := setLog(cfg.Srv.LogLevel)
 
 	// Get value store
-	vSt, err := connValueStore(&cfg.Db)
+	vSt, err := connValueStore(&cfg.VDb)
 	if err != nil {
 		log.Fatalf("unable to connect value store, ended with error: %w", err)
 	}
 
 	// Get user store
+	uSt, err := connUserStore(&cfg.UDb)
+	if err != nil {
+		log.Fatalf("unable to connect user store, ended with error: %w", err)
+	}
 
 	// Get server
-	srv := newServer(vSt, log)
+	srv := newServer(vSt, uSt, log, cfg.Srv.TokenTTL)
 
 	log.Info("api strted work on port: %s", cfg.Srv.Port)
 	// Start listner
@@ -56,11 +60,11 @@ func setLog(level string) *logrus.Logger {
 	return log
 }
 
-// TODO:
-func connValueStore(cfg *config.Database) (store.ValueStore, error) {
-	opts := *&tarantool.Opts{}
+// connValueStore connects to a value store and returns store structure
+func connValueStore(cfg *config.ValueDatabase) (store.ValueStore, error) {
+	opts := tarantool.Opts{}
 
-	con, err := tarantool.Connect(cfg.Port, opts)
+	con, err := tarantool.Connect(cfg.Host+cfg.Port, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -70,5 +74,22 @@ func connValueStore(cfg *config.Database) (store.ValueStore, error) {
 		return nil, err
 	}
 
-	return tarantstore.New(con), nil
+	return tarantstore.NewValueStore(con), nil
+}
+
+// connUserStore connects to a user store and returns store structure
+func connUserStore(cfg *config.UserDatabase) (store.UserStore, error) {
+	opts := tarantool.Opts{}
+
+	con, err := tarantool.Connect(cfg.Host+cfg.Port, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = con.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return tarantstore.NewUserStore(con), nil
 }

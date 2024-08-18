@@ -68,3 +68,24 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 	// 	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
 	// })
 }
+
+func (s *server) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				logger := s.logger.WithFields(logrus.Fields{
+					"remout_addr": r.RemoteAddr,
+					"request_id":  r.Context().Value(ctxKeyRequestID),
+					"method":      r.Method,
+					"URI":         r.RequestURI,
+				})
+
+				logger.Errorf("ended hadling by panic with error: %s", err)
+
+				s.error(w, r, http.StatusInternalServerError, ErrPanicHanding)
+			}
+		}()
+
+		next.ServeHTTP(w, r)
+	})
+}

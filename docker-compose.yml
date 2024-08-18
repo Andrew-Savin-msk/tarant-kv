@@ -1,13 +1,25 @@
 version: '3.8'
 services:
-  value_database:
+  values_db:
     image: tarantool/tarantool:latest
-    container_name: value_database
+    hostname: values_db
     ports:
       - "3301:3301"
-    volumes:
-      - ./migrations/value_init.lua:/opt/tarantool/init.lua
     environment:
-      TARANTOOL_MEMORY_GB: 1.0
+      - TARANTOOL_MEMORY_GB=1.0
+    volumes:
+      - ./migrations/value_store/:/opt/tarantool/
+    # healthcheck:
+    #   test: ["CMD", "tarantool tarantool_is_up"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
     command: tarantool /opt/tarantool/init.lua
-    restart: always
+  api:
+    build: .
+    hostname: api
+    ports:
+      - 8081:8081
+    environment:
+      - DOCKER_CONFIG_PATH=config/config.toml

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
 	"github.com/gorilla/mux"
@@ -24,17 +25,20 @@ var (
 type ctxKey int8
 
 type server struct {
-	router      *mux.Router
-	logger      *logrus.Logger
-	value_store store.ValueStore
-	user_store  store.UserStore
+	router     *mux.Router
+	logger     *logrus.Logger
+	valueStore store.ValueStore
+	userStore  store.UserStore
+	tokenTTL   time.Duration
 }
 
-func newServer(st store.ValueStore, logger *logrus.Logger) *server {
+func newServer(vSt store.ValueStore, uSt store.UserStore, logger *logrus.Logger, tokenTTL time.Duration) *server {
 	srv := &server{
-		router:      mux.NewRouter(),
-		logger:      logger,
-		value_store: st,
+		router:     mux.NewRouter(),
+		logger:     logger,
+		valueStore: vSt,
+		userStore:  uSt,
+		tokenTTL:   tokenTTL,
 	}
 
 	srv.configureRouter()
@@ -49,11 +53,14 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
+	s.router.Use(s.recoverPanic)
 	s.router.PathPrefix("/api")
 
 	// TODO: Now it's off for testing
 	// s.router.Use(s.authenticateUser)
-	s.router.HandleFunc("/login", s.handleLogin()).Methods("POST")
+
+	s.router.HandleFunc("/register", s.handleRegister()).Methods("POST")
+	s.router.HandleFunc("/login", s.handleLogin()).Methods("GET")
 	s.router.HandleFunc("/write", s.handleWriteKeys()).Methods("PUT")
 	s.router.HandleFunc("/read", s.handleReadKeys()).Methods("GET")
 

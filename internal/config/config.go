@@ -1,26 +1,37 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Srv Server   `toml:"server"`
-	Db  Database `toml:"database"`
+	Srv Server        `toml:"server"`
+	VDb ValueDatabase `toml:"value_database"`
+	UDb UserDatabase  `toml:"user_database"`
 }
 
 type Server struct {
-	Port       string `toml:"port"`
-	SessionKey string `toml:"session_key"`
-	LogLevel   string `toml:"log_level"`
+	Port     string        `toml:"port"`
+	LogLevel string        `toml:"log_level"`
+	TokenTTL time.Duration `toml:"token_ttl" env-default:"1h"`
 }
 
-type Database struct {
+type ValueDatabase struct {
+	User     string `toml:"user"`
+	Password string `toml:"password"`
+	Host     string `toml:"host"`
+	DbName   string `toml:"db_name"`
+	Port     string `toml:"port"`
+}
+
+type UserDatabase struct {
 	User     string `toml:"user"`
 	Password string `toml:"password"`
 	Host     string `toml:"host"`
@@ -41,7 +52,8 @@ func Load() *Config {
 
 	configPath := os.Getenv(envParamName)
 	if configPath == "" {
-		log.Fatal("enviromental variable doen't exists!")
+		fmt.Println("default config path")
+		configPath = "config/config.toml"
 	}
 
 	_, err := os.Stat(configPath)
