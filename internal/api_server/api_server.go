@@ -56,7 +56,7 @@ func setLog(level string) *logrus.Logger {
 	case "info":
 		log.SetLevel(logrus.InfoLevel)
 	}
-	fmt.Printf("logger set in level: %s \n", level)
+	fmt.Printf("logger set in level: %s\n", level)
 	return log
 }
 

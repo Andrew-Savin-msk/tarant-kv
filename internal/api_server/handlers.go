@@ -67,7 +67,7 @@ func (s *server) handleLogin() http.HandlerFunc {
 
 func (s *server) handleWriteKeys() http.HandlerFunc {
 	type request struct {
-		Data map[interface{}]interface{} `json:"data"`
+		Data map[string]interface{} `json:"data"`
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
@@ -77,19 +77,24 @@ func (s *server) handleWriteKeys() http.HandlerFunc {
 			return
 		}
 
-		err = s.valueStore.SetKeys(req.Data)
+		uninserted, err := s.valueStore.SetKeys(req.Data)
 		if err != nil {
-			s.error(w, r, http.StatusInternalServerError, ErrInternalDbError)
+			// TODO: needs alias
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.respond(w, r, http.StatusOK, map[string]string{"status": "success"})
+		if len(uninserted) != 0 {
+			s.respond(w, r, http.StatusOK, map[string]interface{}{"status": "partially_inserded", "not_inserted": uninserted})
+		} else {
+			s.respond(w, r, http.StatusOK, map[string]interface{}{"status": "success"})
+		}
 	})
 }
 
 func (s *server) handleReadKeys() http.HandlerFunc {
 	type request struct {
-		Data map[interface{}]interface{} `json:"data"`
+		Keys []string `json:"keys"`
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
@@ -99,12 +104,17 @@ func (s *server) handleReadKeys() http.HandlerFunc {
 			return
 		}
 
-		res, err := s.valueStore.GetKeys(req.Data)
+		res, unfound, err := s.valueStore.GetKeys(req.Keys)
 		if err != nil {
-			s.error(w, r, http.StatusInternalServerError, ErrInternalDbError)
+			// TODO: needs alias
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.respond(w, r, http.StatusOK, map[string]interface{}{"data": res})
+		if len(unfound) != 0 {
+			s.respond(w, r, http.StatusOK, map[string]interface{}{"data": res, "not_found": unfound})
+		} else {
+			s.respond(w, r, http.StatusOK, map[string]interface{}{"data": res})
+		}
 	})
 }

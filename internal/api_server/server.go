@@ -54,8 +54,8 @@ func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
 	s.router.Use(s.recoverPanic)
-	s.router.PathPrefix("/api")
 
+	s.router = s.router.PathPrefix("/api").Subrouter()
 	// TODO: Now it's off for testing
 	// s.router.Use(s.authenticateUser)
 

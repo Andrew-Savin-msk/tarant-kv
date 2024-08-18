@@ -1,8 +1,10 @@
 package store
 
-import "fmt"
+import "errors"
 
 var (
-	ErrRecordNotFound      = fmt.Errorf("no such record")
-	ErrRecordAlreadyExists = fmt.Errorf("record already exists")
+	ErrRecordNotFound      = errors.New("no such record")
+	ErrRecordAlreadyExists = errors.New("record already exists")
+	ErrStartingTransaction = errors.New("unable to start transaction")
+	ErrConnCLosed          = errors.New("connection closed")
 )
