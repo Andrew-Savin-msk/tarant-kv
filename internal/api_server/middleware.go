@@ -102,5 +102,5 @@ func (s *server) basePaths(next http.Handler) http.Handler {
 
 // protectedPaths middleware wrapper for authorisation required paths
 func (s *server) protectedPaths(next http.Handler) http.Handler {
-	return s.basePaths(s.authenticateUser(next))
+	return s.authenticateUser(s.basePaths(next))
 }
