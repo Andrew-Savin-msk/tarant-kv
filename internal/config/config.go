@@ -18,9 +18,10 @@ type Config struct {
 }
 
 type Server struct {
-	Port     string        `toml:"port"`
-	LogLevel string        `toml:"log_level"`
-	TokenTTL time.Duration `toml:"token_ttl" env-default:"1h"`
+	Port       string        `toml:"port"`
+	LogLevel   string        `toml:"log_level"`
+	SessionKey string        `toml:"session_key"`
+	TokenTTL   time.Duration `toml:"token_ttl" env-default:"1h"`
 }
 
 type ValueDatabase struct {

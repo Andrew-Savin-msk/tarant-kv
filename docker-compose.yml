@@ -15,9 +15,9 @@ services:
         timeout: 10s
         retries: 20
     command: tarantool /opt/tarantool/init.lua && touch /etc/OK
-  udb:
+  users_db:
     image: tarantool/tarantool:latest
-    hostname: udb
+    hostname: users_db
     ports:
       - "3302:3301"
     environment:
@@ -40,6 +40,6 @@ services:
     depends_on:
       values_db:
         condition: service_started
-      udb:
+      users_db:
         condition: service_started
 

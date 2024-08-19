@@ -2,25 +2,18 @@ package apiserver
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	sessionName        = "session-id"
+	sessionName        = "Authorization"
 	ctxKeyUser  ctxKey = iota
 	ctxKeyRequestID
-)
-
-var (
-	errIncorrectEmailOrPassword = errors.New("incorrect email or password")
-	errNotAuthenticated         = errors.New("not auntificated")
 )
 
 type ctxKey int8
@@ -30,17 +23,17 @@ type server struct {
 	logger     *logrus.Logger
 	valueStore store.ValueStore
 	userStore  store.UserStore
-	sessionStore sessions.CookieStore
+	sessionKey string
 	tokenTTL   time.Duration
 }
 
-func newServer(vSt store.ValueStore, uSt store.UserStore, logger *logrus.Logger, tokenTTL time.Duration) *server {
+func newServer(vSt store.ValueStore, uSt store.UserStore, logger *logrus.Logger, sessionKey string, tokenTTL time.Duration) *server {
 	srv := &server{
 		router:     mux.NewRouter(),
 		logger:     logger,
 		valueStore: vSt,
 		userStore:  uSt,
-		sessionStore: sessions.NewStore()
+		sessionKey: sessionKey,
 		tokenTTL:   tokenTTL,
 	}
 

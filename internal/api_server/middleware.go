@@ -2,10 +2,12 @@ package apiserver
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/Andrew-Savin-msk/tarant-kv/internal/lib/jwt"
+	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -30,7 +32,7 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 		logger.Infof("started %s %s", r.Method, r.RequestURI)
 
 		start := time.Now()
-		rw := &responseWrighter{w, http.StatusOK}
+		rw := &responseWriter{w, http.StatusOK}
 
 		next.ServeHTTP(rw, r)
 
@@ -46,12 +48,32 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 // authenticateUser autentificates user by token in Authorisation header
 func (s *server) authenticateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("auth mdddleware on: %s\n:", r.RequestURI)
+		token := r.Header.Get(sessionName)
+		if token == "" {
+			s.error(w, r, http.StatusUnauthorized, ErrMissingToken)
+			return
+		}
 
-		next.ServeHTTP(w, r)
+		cl, err := jwt.DecodeJWT(token, s.sessionKey)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, ErrInvalidToken)
+			return
+		}
+
+		u, err := s.userStore.FindUser(cl.Username)
+		if u == nil || err != nil {
+			if errors.Is(err, store.ErrRecordNotFound) {
+				s.error(w, r, http.StatusBadRequest, ErrNotAuntificated)
+			}
+			s.error(w, r, http.StatusBadRequest, ErrInvalidCredentials)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cl.Username)))
 	})
 }
 
+// recoverPanic panic recovering middleware
 func (s *server) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -73,10 +95,12 @@ func (s *server) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+// basePaths middleware wrapper for base paths
 func (s *server) basePaths(next http.Handler) http.Handler {
-	return s.recoverPanic(s.setRequestID(s.logRequest(next)))
+	return s.setRequestID(s.recoverPanic(s.logRequest(next)))
 }
 
+// protectedPaths middleware wrapper for authorisation required paths
 func (s *server) protectedPaths(next http.Handler) http.Handler {
 	return s.basePaths(s.authenticateUser(next))
 }

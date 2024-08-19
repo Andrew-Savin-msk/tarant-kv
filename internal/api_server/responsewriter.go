@@ -2,12 +2,12 @@ package apiserver
 
 import "net/http"
 
-type responseWrighter struct {
+type responseWriter struct {
 	http.ResponseWriter
 	code int
 }
 
-func (w *responseWrighter) WrightHeader(statusCode int) {
+func (w *responseWriter) WrightHeader(statusCode int) {
 	w.code = statusCode
 	w.ResponseWriter.WriteHeader((statusCode))
 }

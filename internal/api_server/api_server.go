@@ -31,7 +31,7 @@ func Start(cfg *config.Config) error {
 	}
 
 	// Get server
-	srv := newServer(vSt, uSt, log, cfg.Srv.TokenTTL)
+	srv := newServer(vSt, uSt, log, cfg.Srv.SessionKey, cfg.Srv.TokenTTL)
 
 	log.Infof("api strted work on port: %s", cfg.Srv.Port[1:])
 	// Start listner

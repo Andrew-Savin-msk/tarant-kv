@@ -5,10 +5,11 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Andrew-Savin-msk/tarant-kv/internal/lib/jwt"
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
-	"github.com/google/uuid"
 )
 
+// handleLogin handles login requests
 func (s *server) handleLogin() http.HandlerFunc {
 	type request struct {
 		Username string `json:"username"`
@@ -37,14 +38,17 @@ func (s *server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		// TODO: Generate token
-		token := uuid.NewString()
-		// TODO: Save token
+		token, err := jwt.GenerateJWT(u.Email, s.tokenTTL, s.sessionKey)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
 
-		s.respond(w, r, http.StatusOK, u)
+		s.respond(w, r, http.StatusOK, map[string]interface{}{"token": token})
 	})
 }
 
+// handleWriteKeys handles requests for wrighting keys
 func (s *server) handleWriteKeys() http.HandlerFunc {
 	type request struct {
 		Data map[string]interface{} `json:"data"`
@@ -72,6 +76,7 @@ func (s *server) handleWriteKeys() http.HandlerFunc {
 	})
 }
 
+// handleReadKeys handles requests for reading keys
 func (s *server) handleReadKeys() http.HandlerFunc {
 	type request struct {
 		Keys []string `json:"keys"`
