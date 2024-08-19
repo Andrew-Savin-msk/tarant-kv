@@ -1,3 +1,4 @@
-*.env
-/config/
+.env
+config/
+tests/
 
