@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -44,29 +45,11 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 
 // authenticateUser autentificates user by token in Authorisation header
 func (s *server) authenticateUser(next http.Handler) http.Handler {
-	// TODO:
-	panic("unimplemented")
-	// return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	session, err := s.sessionStore.Get(r, sessionName)
-	// 	if err != nil {
-	// 		s.error(w, r, http.StatusInternalServerError, err)
-	// 		return
-	// 	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("auth mdddleware on: %s\n:", r.RequestURI)
 
-	// 	id, ok := session.Values["user_id"]
-	// 	if !ok {
-	// 		s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
-	// 		return
-	// 	}
-
-	// 	u, err := s.store.User().Find(id.(int))
-	// 	if err != nil {
-	// 		s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
-	// 		return
-	// 	}
-
-	// 	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
-	// })
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *server) recoverPanic(next http.Handler) http.Handler {
@@ -88,4 +71,12 @@ func (s *server) recoverPanic(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *server) basePaths(next http.Handler) http.Handler {
+	return s.recoverPanic(s.setRequestID(s.logRequest(next)))
+}
+
+func (s *server) protectedPaths(next http.Handler) http.Handler {
+	return s.basePaths(s.authenticateUser(next))
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/tarantool/go-tarantool"
 )
 
-const schemaName = "values"
+const schemaNameValues = "values"
 
 type work struct {
 	Bn  store.Bind
@@ -58,7 +58,6 @@ func (s *ValueStore) SetKeys(data map[string]interface{}) ([]store.Bind, error) 
 
 // TODO:
 func (s *ValueStore) GetKeys(keys []string) (map[string]interface{}, []string, error) {
-	fmt.Println(keys)
 	const op = "valuestore.GeKeys"
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -103,7 +102,7 @@ func writeWorker(ctx context.Context, conn *tarantool.Connection, erroring chan<
 			if !ok {
 				return
 			}
-			_, err := conn.Replace(schemaName, []interface{}{b.Key, b.Value})
+			_, err := conn.Replace(schemaNameValues, []interface{}{b.Key, b.Value})
 			if err != nil {
 				if !conn.ConnectedNow() {
 					erroring <- &work{
@@ -134,7 +133,7 @@ func readWorker(ctx context.Context, conn *tarantool.Connection, tasks <-chan st
 			if !ok {
 				return
 			}
-			resp, err := conn.Select(schemaName, "primary", 0, 2, tarantool.IterEq, []interface{}{b})
+			resp, err := conn.Select(schemaNameValues, "primary", 0, 2, tarantool.IterEq, []interface{}{b})
 			if err != nil {
 				if !conn.ConnectedNow() {
 					res <- &work{

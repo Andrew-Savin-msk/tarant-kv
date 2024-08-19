@@ -8,6 +8,7 @@ import (
 
 	"github.com/Andrew-Savin-msk/tarant-kv/internal/store"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,6 +30,7 @@ type server struct {
 	logger     *logrus.Logger
 	valueStore store.ValueStore
 	userStore  store.UserStore
+	sessionStore sessions.CookieStore
 	tokenTTL   time.Duration
 }
 
@@ -38,6 +40,7 @@ func newServer(vSt store.ValueStore, uSt store.UserStore, logger *logrus.Logger,
 		logger:     logger,
 		valueStore: vSt,
 		userStore:  uSt,
+		sessionStore: sessions.NewStore()
 		tokenTTL:   tokenTTL,
 	}
 
@@ -51,19 +54,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
-	s.router.Use(s.setRequestID)
-	s.router.Use(s.logRequest)
-	s.router.Use(s.recoverPanic)
-
-	s.router = s.router.PathPrefix("/api").Subrouter()
-	// TODO: Now it's off for testing
-	// s.router.Use(s.authenticateUser)
-
-	s.router.HandleFunc("/register", s.handleRegister()).Methods("POST")
-	s.router.HandleFunc("/login", s.handleLogin()).Methods("GET")
-	s.router.HandleFunc("/write", s.handleWriteKeys()).Methods("PUT")
-	s.router.HandleFunc("/read", s.handleReadKeys()).Methods("GET")
-
+	s.router.Handle("/api/login", s.basePaths(s.handleLogin()))
+	s.router.Handle("/api/write", s.protectedPaths(s.handleWriteKeys()))
+	s.router.Handle("/api/read", s.protectedPaths(s.handleReadKeys()))
 }
 
 // Func for making call of respond func with Error pattern

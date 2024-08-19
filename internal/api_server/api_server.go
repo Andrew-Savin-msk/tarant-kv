@@ -10,6 +10,7 @@ import (
 	tarantstore "github.com/Andrew-Savin-msk/tarant-kv/internal/store/tarant_store"
 	"github.com/sirupsen/logrus"
 	"github.com/tarantool/go-tarantool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Start init's all connections and starts api's work
@@ -20,19 +21,19 @@ func Start(cfg *config.Config) error {
 	// Get value store
 	vSt, err := connValueStore(&cfg.VDb)
 	if err != nil {
-		log.Fatalf("unable to connect value store, ended with error: %w", err)
+		log.Fatalf("unable to connect value store (%s), ended with error: %s", cfg.VDb.Host, err)
 	}
 
 	// Get user store
 	uSt, err := connUserStore(&cfg.UDb)
 	if err != nil {
-		log.Fatalf("unable to connect user store, ended with error: %w", err)
+		log.Fatalf("unable to connect user store (%s), ended with error: %s", cfg.UDb.Host, err)
 	}
 
 	// Get server
 	srv := newServer(vSt, uSt, log, cfg.Srv.TokenTTL)
 
-	log.Info("api strted work on port: %s", cfg.Srv.Port)
+	log.Infof("api strted work on port: %s", cfg.Srv.Port[1:])
 	// Start listner
 	err = http.ListenAndServe(cfg.Srv.Port, srv)
 
@@ -87,6 +88,16 @@ func connUserStore(cfg *config.UserDatabase) (store.UserStore, error) {
 	}
 
 	_, err = con.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	pHash, err := bcrypt.GenerateFromPassword([]byte(cfg.DefPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = con.Replace("users", []interface{}{cfg.DefUser, string(pHash)})
 	if err != nil {
 		return nil, err
 	}

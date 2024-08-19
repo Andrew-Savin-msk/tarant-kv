@@ -4,16 +4,12 @@
   token_ttl = "1h"
 
 [value_database]
-  user = "postgres"
-  password = "postgres"
   host = "values_db"
-  db_name = "filmoteka"
   port = ":3301"
 
 [user_database]
-  user = "postgres"
-  password = "postgres"
-  host = "values_db"
-  db_name = "filmoteka"
-  port = ":3301"
+  def_user="admin"
+  def_passwd="presale"
+  host = "udb"
+  port = ":3302"
   

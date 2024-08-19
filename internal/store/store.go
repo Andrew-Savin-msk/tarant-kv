@@ -15,7 +15,7 @@ type ValueStore interface {
 }
 
 type UserStore interface {
-	SaveUser(login string, pHash []byte) error
+	// SaveUser(login string, pHash []byte) error
 	FindUser(login string) (*models.User, error)
-	SaveToken(login, token string) error
+	// SaveToken(login, token string) error
 }

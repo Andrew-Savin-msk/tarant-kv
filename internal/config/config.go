@@ -24,19 +24,16 @@ type Server struct {
 }
 
 type ValueDatabase struct {
-	User     string `toml:"user"`
-	Password string `toml:"password"`
-	Host     string `toml:"host"`
-	DbName   string `toml:"db_name"`
-	Port     string `toml:"port"`
+	Host string `toml:"host"`
+	Port string `toml:"port"`
 }
 
 type UserDatabase struct {
-	User     string `toml:"user"`
-	Password string `toml:"password"`
-	Host     string `toml:"host"`
-	DbName   string `toml:"db_name"`
-	Port     string `toml:"port"`
+	DefUser     string `toml:"def_user"`
+	DefPassword string `toml:"def_passwd"`
+	Host        string `toml:"host"`
+	DbName      string `toml:"db_name"`
+	Port        string `toml:"port"`
 }
 
 func Load() *Config {
