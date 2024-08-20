@@ -203,7 +203,7 @@
  ```
  CONFIG_PATH_DOCKER=<путь_до_конфигурационного_файла>
  ```
-- Создайте в папке tests по такому же пути что вы указали в CONFIG_PATH_DOCKER, абсолютно такой же файл что и в конфигурации
+- Создайте в папке `tests/endpoint_test/` по такому же пути что вы указали в CONFIG_PATH_DOCKER, абсолютно такой же файл что и в конфигурации
 - Запустите docker-compose вот таким образом:
 ```bash
 docker-compose exec api go test ./tests/...
