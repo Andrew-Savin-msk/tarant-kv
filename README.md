@@ -156,8 +156,8 @@
 1. **Клонирование репозитория**:
 
    ```bash
-   git clone https://github.com/yourusername/kv-store-api.git
-   cd kv-store-api
+   git clone https://github.com/yourusername/tarant-kv.git
+   cd tarant-kv
    ```
 
 2. **Настройка окружения**:
@@ -199,7 +199,11 @@
 ## Тестирование
 
 Интеграционные тесты для всех эндпоинтов API находятся в каталоге `tests/`. Для запуска тестов выполните:
-
+- Замениет путь на путь до конфигурационного файла для тетов (с тестовыми бд)
+ ```
+ CONFIG_PATH_DOCKER=<путь_до_конфигурационного_файла>
+ ```
+- Запустите docker-compose вот таким образом:
 ```bash
 docker-compose exec api go test ./tests/...
 ```
