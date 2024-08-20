@@ -188,10 +188,10 @@
 3. **Запуск приложения**:
 
    ```bash
-   docker-compose up --build
+   docker-compose up -d
    ```
 
-   Эта команда запустит как Tarantool, так и API сервис в контейнерах Docker.
+   Эта команда запустит как Tarantool'ы, так и API сервис в контейнерах Docker.
 
 4. **Доступ к API**:
    API будет доступен по адресу `http://localhost:8081`.
