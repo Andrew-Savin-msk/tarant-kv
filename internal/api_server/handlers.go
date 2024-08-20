@@ -34,13 +34,13 @@ func (s *server) handleLogin() http.HandlerFunc {
 				s.error(w, r, http.StatusBadRequest, ErrInvalidCredentials)
 				return
 			}
-			s.error(w, r, http.StatusBadRequest, err)
+			s.error(w, r, http.StatusInternalServerError, ErrInternalDbError)
 			return
 		}
 
 		token, err := jwt.GenerateJWT(u.Email, s.tokenTTL, s.sessionKey)
 		if err != nil {
-			s.error(w, r, http.StatusBadRequest, err)
+			s.error(w, r, http.StatusBadRequest, ErrInvalidCredentials)
 			return
 		}
 
@@ -64,7 +64,7 @@ func (s *server) handleWriteKeys() http.HandlerFunc {
 		uninserted, err := s.valueStore.SetKeys(req.Data)
 		if err != nil {
 			// TODO: needs alias
-			s.error(w, r, http.StatusInternalServerError, err)
+			s.error(w, r, http.StatusInternalServerError, ErrInternalDbError)
 			return
 		}
 
